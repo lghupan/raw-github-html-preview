@@ -1,4 +1,5 @@
 node_modules/
+extension/_metadata/
 .DS_Store
 artifacts/
 *.zip
