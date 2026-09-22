@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Standalone preview fixture</title>
+    <style>body { background: rgb(240, 248, 242); font-family: sans-serif; } h1 { color: rgb(31, 94, 48); }</style>
+  </head>
+  <body>
+    <h1>Rendered HTML</h1>
+    <button id="increment" type="button">Increment</button>
+    <output id="count">0</output>
+    <img id="embedded" alt="Embedded artwork" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Crect width='24' height='24' fill='green'/%3E%3C/svg%3E">
+    <img alt="Blocked external image" src="https://example.test/external.png">
+    <script src="https://example.test/external.js"></script>
+    <script>
+      document.body.dataset.ready = "yes";
+      document.getElementById("increment").addEventListener("click", () => {
+        const count = document.getElementById("count");
+        count.value = String(Number(count.value) + 1);
+      });
+      fetch("https://example.test/network").catch(() => {
+        document.body.dataset.network = "blocked";
+      });
+      try { localStorage.setItem("preview-test", "value"); } catch {
+        document.body.dataset.storage = "blocked";
+      }
+      try { document.cookie = "preview-test=value"; } catch {
+        document.body.dataset.cookies = "blocked";
+      }
+    </script>
+  </body>
+</html>
