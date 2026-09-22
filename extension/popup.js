@@ -1,4 +1,4 @@
-import { htmlFile, matchesPreview, previewRule } from "./rules.js";
+import { htmlFile, matchesSource, sourceRule } from "./rules.js";
 
 const status = document.getElementById("status");
 const fileLabel = document.getElementById("file");
@@ -14,8 +14,8 @@ async function initialize() {
 
   const rules = await chrome.declarativeNetRequest.getSessionRules();
   const existing = rules.find((rule) => rule.id === tab.id + 1);
-  const enabled = existing && matchesPreview(existing, tab.url);
-  status.textContent = enabled ? "Preview is on for this file and tab." : "Render this file in the current tab.";
+  const enabled = !(existing && matchesSource(existing, tab.url));
+  status.textContent = enabled ? "HTML renders automatically." : "Source view is on for this file and tab.";
   fileLabel.textContent = new URL(file).pathname;
   fileLabel.hidden = false;
   toggle.textContent = enabled ? "View source" : "Render HTML";
@@ -30,10 +30,10 @@ async function initialize() {
       }
       await chrome.declarativeNetRequest.updateSessionRules({
         removeRuleIds: [tab.id + 1],
-        addRules: enabled ? [] : [previewRule(tab.id, current.url)],
+        addRules: enabled ? [sourceRule(tab.id, current.url)] : [],
       });
       await chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: "#285b3b" });
-      await chrome.action.setBadgeText({ tabId: tab.id, text: enabled ? "" : "HTML" });
+      await chrome.action.setBadgeText({ tabId: tab.id, text: enabled ? "SRC" : "" });
       await chrome.tabs.reload(tab.id, { bypassCache: true });
       window.close();
     } catch (error) {

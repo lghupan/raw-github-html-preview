@@ -1,11 +1,16 @@
 {
   "manifest_version": 3,
   "name": "Raw GitHub HTML Preview",
-  "version": "1.0.0",
-  "description": "Render a standalone HTML file from raw.githubusercontent.com in its current tab.",
+  "version": "1.1.0",
+  "description": "Automatically render standalone HTML files from raw.githubusercontent.com.",
   "minimum_chrome_version": "120",
   "permissions": ["declarativeNetRequestWithHostAccess"],
   "host_permissions": ["https://raw.githubusercontent.com/*"],
+  "declarative_net_request": {
+    "rule_resources": [
+      { "id": "auto_preview", "enabled": true, "path": "preview-rules.json" }
+    ]
+  },
   "action": {
     "default_title": "Raw GitHub HTML Preview",
     "default_popup": "popup.html"

@@ -1,6 +1,6 @@
 # Raw GitHub HTML Preview
 
-A small Chrome extension that renders standalone HTML from **`https://raw.githubusercontent.com/` only**. Click **Render HTML** to preview the current file; click **View source** to switch back.
+A small Chrome extension that automatically renders standalone HTML from **`https://raw.githubusercontent.com/` only**. Open a raw `.html` or `.htm` URL and the page renders immediately, without clicking the extension.
 
 The extension has no runtime dependencies, build step, account, analytics, or preview server.
 
@@ -10,18 +10,17 @@ The extension has no runtime dependencies, build step, account, analytics, or pr
 2. Open `chrome://extensions` in Chrome 120 or newer.
 3. Turn on **Developer mode**.
 4. Click **Load unpacked** and select the repository's **`extension`** folder.
-5. Pin **Raw GitHub HTML Preview** from Chrome's Extensions menu.
+5. Optionally pin **Raw GitHub HTML Preview** to access its **View source** toggle.
 
 You do not need Node.js or npm to install or use the extension. Keep the folder in place while the extension is installed. After pulling updates, click **Reload** on its card in `chrome://extensions`.
 
 ## Use
 
 1. On GitHub, open an `.html` or `.htm` file and click **Raw**.
-2. Wait for the raw source to finish loading.
-3. Click the extension icon, then **Render HTML**.
-4. Open the extension again and choose **View source** to return to raw text.
+2. The HTML page renders automatically. No extension clicks are needed.
+3. To inspect raw text, open the extension and choose **View source**. Choose **Render HTML** to switch back.
 
-Preview applies only to the selected file in that tab. A second tab stays as source. Navigating to another file or website clears the selection. Closing the tab or restarting Chrome also clears it.
+Automatic preview is the default in every tab and after browser restarts. **View source** creates an exception only for that file and tab; it survives refreshing the page. Navigating to another file or website, closing the tab, or restarting Chrome clears the exception.
 
 Private repositories work when GitHub's raw URL already grants access, including URLs with a `token` query parameter. An expired token still produces GitHub's error; return to the file on GitHub and click **Raw** to obtain a fresh link. The extension cannot grant access to a repository.
 
@@ -33,14 +32,14 @@ Private repositories work when GitHub's raw URL already grants access, including
 
 This is for self-contained files. External scripts, stylesheets, fonts, images, API requests, frames, and other network assets are blocked. Browser storage, cookies, forms, popups, and downloads are unavailable in the preview sandbox. Files that depend on these features need a normal local development server.
 
-Previewing executes the file's inline scripts. Scripts can still navigate their own tab, so preview HTML you trust. The sandbox is not a general-purpose malware analysis environment.
+Opening a matching raw HTML URL automatically executes the file's inline scripts. Scripts can still navigate their own tab, so open HTML you trust. The sandbox is not a general-purpose malware analysis environment.
 
 ## Permissions and privacy
 
 | Permission | Purpose |
 | --- | --- |
 | `https://raw.githubusercontent.com/*` | Read the current raw tab's URL and apply response-header changes on this exact host. |
-| `declarativeNetRequestWithHostAccess` | Ask Chrome to change response headers for the selected file and tab. |
+| `declarativeNetRequestWithHostAccess` | Ask Chrome to render matching raw HTML responses and support a per-tab source exception. |
 
 There is no `activeTab`, `tabs`, `scripting`, `storage`, `cookies`, `webRequest`, or all-sites permission. There are no content scripts or external-message handlers.
 
@@ -50,20 +49,21 @@ The browser applies three response headers:
 - `Content-Security-Policy` permits inline styles and scripts while isolating the document in an opaque origin and blocking external assets.
 - `Referrer-Policy: no-referrer` prevents the raw URL from being sent as a referrer.
 
-Rules are scoped to top-level requests for the exact file path and tab ID. They do not change subresource headers, other tabs, other files, or other hosts. The popup shows only the file path, never its query string.
+A packaged static rule matches only top-level HTTPS requests on the exact raw host whose path ends in `.html` or `.htm`, case-insensitively. It applies before the first response, including after Chrome restarts. It does not change subresource headers, non-HTML files, or other hosts. **View source** adds a higher-priority session exception for the exact file path and tab ID. The popup shows only the file path, never its query string.
 
 The extension never reads, copies, uploads, or stores response bodies. It does not make network requests. The current URL is read briefly in memory; query parameters, including private raw tokens, are excluded from its session rules. Chrome still handles the original URL normally, including its own history and requests to GitHub.
 
-Chrome's host permission grants access to the raw host as a whole; the extension's own rules narrow its behavior to the selected HTML file. There is no permission for `github.com`, subdomains of the raw host, HTTP URLs, or unrelated sites.
+Chrome's host permission grants access to the raw host as a whole; the extension's own rules narrow its behavior to HTML document requests. There is no permission for `github.com`, subdomains of the raw host, HTTP URLs, or unrelated sites.
 
 ## Source
 
 All installed code is in `extension/`:
 
 - `manifest.json`: the complete permission declaration.
-- `rules.js`: exact-host validation, the preview policy, and per-tab rule construction.
+- `preview-rules.json`: the automatic HTML rule and isolated preview policy.
+- `rules.js`: exact-host validation and per-tab source exception construction.
 - `popup.html`, `popup.css`, `popup.js`: the preview toggle.
-- `background.js`: removes rules after navigation or tab closure.
+- `background.js`: removes source exceptions after navigation or tab closure.
 
 ## Verify
 
@@ -76,7 +76,7 @@ npm test
 npm run test:browser
 ```
 
-The browser tests load the actual unpacked extension into an isolated Chromium profile. A temporary local HTTPS fixture simulates the raw host with GitHub-style content and security headers. The tests use the real extension popup, Chrome APIs, network stack, and response-header rules. They verify rendering, embedded JavaScript and images, isolation, token exclusion, host and file restrictions, source restoration, errors, and rule cleanup. The temporary browser profile and certificate are deleted afterward.
+The browser tests load the actual unpacked extension into an isolated Chromium profile. A temporary local HTTPS fixture simulates the raw host with GitHub-style content and security headers. The tests use the real extension popup, Chrome APIs, network stack, and response-header rules. They verify automatic rendering on the first request, embedded JavaScript and images, isolation, token exclusion, host and file restrictions, per-tab source exceptions, errors, and rule cleanup. The temporary browser profile and certificate are deleted afterward.
 
 An optional regression check for the original logo-study page can be run with a local copy:
 

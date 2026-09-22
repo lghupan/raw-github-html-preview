@@ -1,0 +1,19 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "responseHeaders": [
+        { "header": "content-type", "operation": "set", "value": "text/html; charset=utf-8" },
+        { "header": "content-security-policy", "operation": "set", "value": "sandbox allow-scripts; default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; media-src data: blob:; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'" },
+        { "header": "referrer-policy", "operation": "set", "value": "no-referrer" }
+      ]
+    },
+    "condition": {
+      "regexFilter": "^https://raw\\.githubusercontent\\.com/[^?#]*\\.[hH][tT][mM][lL]?(\\?.*)?$",
+      "isUrlFilterCaseSensitive": true,
+      "resourceTypes": ["main_frame"]
+    }
+  }
+]

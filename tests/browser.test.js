@@ -14,7 +14,7 @@ const extension = path.join(root, "extension");
 const rawOrigin = "https://raw.githubusercontent.com";
 const rawFile = rawOrigin + "/owner/repo/main/index.html?token=test-only";
 
-test("the installed extension renders only an opted-in raw HTML tab", { timeout: 120_000 }, async (t) => {
+test("the installed extension automatically renders only raw HTML files", { timeout: 120_000 }, async (t) => {
   const temp = await mkdtemp(path.join(tmpdir(), "raw-html-preview-"));
   let context;
   let server;
@@ -94,12 +94,10 @@ test("the installed extension renders only an opted-in raw HTML tab", { timeout:
       assert.deepEqual(permissions.permissions, ["declarativeNetRequestWithHostAccess"]);
     });
 
-    await t.test("the raw source is unchanged until Render HTML is clicked", async () => {
+    await t.test("HTML renders on the first navigation without opening the extension", async () => {
       await page.goto(rawFile);
-      assert.equal(await page.evaluate(() => document.contentType), "text/plain");
-      assert.equal(await page.locator("h1").count(), 0);
-      await toggle(page, "Render HTML");
       assert.equal(await page.evaluate(() => document.contentType), "text/html");
+      assert.equal(requests.filter((request) => request.url === new URL(rawFile).pathname + new URL(rawFile).search).length, 1);
       assert.equal(await page.locator("h1").textContent(), "Rendered HTML");
       assert.equal(await page.locator("h1").evaluate((node) => getComputedStyle(node).color), "rgb(31, 94, 48)");
       await page.locator("#increment").click();
@@ -116,31 +114,41 @@ test("the installed extension renders only an opted-in raw HTML tab", { timeout:
       assert.equal(requests.filter((request) => request.host === "example.test").length, 0);
     });
 
-    await t.test("another tab showing the same file stays plain text", async () => {
+    await t.test("View source reverses rendering and survives a page reload", async () => {
+      await toggle(page, "View source");
+      assert.equal(await page.evaluate(() => document.contentType), "text/plain");
+      assert.equal((await rules()).length, 1);
+      assert.ok(!JSON.stringify(await rules()).includes("test-only"));
+      await page.reload();
+      assert.equal(await page.evaluate(() => document.contentType), "text/plain");
+    });
+
+    await t.test("another tab renders automatically while the first stays as source", async () => {
       const other = await context.newPage();
       await other.goto(rawFile);
-      assert.equal(await other.evaluate(() => document.contentType), "text/plain");
+      assert.equal(await other.evaluate(() => document.contentType), "text/html");
+      assert.equal(await page.evaluate(() => document.contentType), "text/plain");
       await other.close();
     });
 
-    await t.test("View source reverses rendering", async () => {
-      await toggle(page, "View source");
-      assert.equal(await page.evaluate(() => document.contentType), "text/plain");
+    await t.test("Render HTML restores automatic rendering", async () => {
+      await toggle(page, "Render HTML");
+      assert.equal(await page.evaluate(() => document.contentType), "text/html");
       assert.equal((await rules()).length, 0);
     });
 
-    await t.test("navigation to another file clears the opt-in", async () => {
-      await toggle(page, "Render HTML");
+    await t.test("navigation to another file clears the source exception and renders it", async () => {
+      await toggle(page, "View source");
       await page.goto(rawOrigin + "/owner/repo/main/other.html");
-      assert.equal(await page.evaluate(() => document.contentType), "text/plain");
+      assert.equal(await page.evaluate(() => document.contentType), "text/html");
       await page.waitForTimeout(100);
       assert.equal((await rules()).length, 0);
       await page.goto(rawFile);
-      assert.equal(await page.evaluate(() => document.contentType), "text/plain");
+      assert.equal(await page.evaluate(() => document.contentType), "text/html");
     });
 
-    await t.test("navigating away from the raw host clears the opt-in", async () => {
-      await toggle(page, "Render HTML");
+    await t.test("navigating away from the raw host clears the source exception", async () => {
+      await toggle(page, "View source");
       await page.goto("https://github.com/index.html");
       assert.equal(await page.evaluate(() => document.contentType), "text/plain");
       const popup = await popupFor(page);
@@ -161,11 +169,17 @@ test("the installed extension renders only an opted-in raw HTML tab", { timeout:
 
     await t.test("expired raw links remain visible as an error", async () => {
       await page.goto(rawFile.replace("index.html", "expired.html"));
-      await toggle(page, "Render HTML");
       assert.match(await page.locator("body").textContent(), /404: Not Found/);
     });
 
-    await t.test("closing the tab removes its rule", async () => {
+    await t.test("mixed-case HTM filenames with query strings render automatically", async () => {
+      await page.goto(rawFile.replace("index.html", "sample.HtM"));
+      assert.equal(await page.evaluate(() => document.contentType), "text/html");
+      assert.equal(await page.locator("h1").textContent(), "Rendered HTML");
+    });
+
+    await t.test("closing the tab removes its source exception", async () => {
+      await toggle(page, "View source");
       await page.close();
       await worker.evaluate(async () => {
         for (let i = 0; i < 40; i++) {
@@ -179,10 +193,9 @@ test("the installed extension renders only an opted-in raw HTML tab", { timeout:
     if (privateFixture) {
       await t.test("the supplied standalone page renders and its theme toggle works", async () => {
         const privatePage = await context.newPage();
-        await privatePage.goto(rawOrigin + "/private/repo/main/index.html?token=test-only");
         const errors = [];
         privatePage.on("pageerror", (error) => errors.push(error.message));
-        await toggle(privatePage, "Render HTML");
+        await privatePage.goto(rawOrigin + "/private/repo/main/index.html?token=test-only");
         await privatePage.locator("#grid .tile").first().waitFor();
         const before = await privatePage.locator("body").getAttribute("data-theme");
         await privatePage.locator("#theme").click();

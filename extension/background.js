@@ -1,11 +1,11 @@
-import { matchesPreview } from "./rules.js";
+import { matchesSource } from "./rules.js";
 
-async function clearPreview(tabId) {
+async function clearSource(tabId) {
   await chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: [tabId + 1] });
 }
 
 chrome.tabs.onRemoved.addListener((tabId) => {
-  clearPreview(tabId).catch(() => {});
+  clearSource(tabId).catch(() => {});
 });
 
 chrome.tabs.onUpdated.addListener((tabId, change, tab) => {
@@ -13,8 +13,8 @@ chrome.tabs.onUpdated.addListener((tabId, change, tab) => {
   void (async () => {
     const rules = await chrome.declarativeNetRequest.getSessionRules();
     const rule = rules.find((item) => item.id === tabId + 1);
-    if (rule && !matchesPreview(rule, tab.pendingUrl || tab.url)) {
-      await clearPreview(tabId);
+    if (rule && !matchesSource(rule, tab.pendingUrl || tab.url)) {
+      await clearSource(tabId);
       await chrome.action.setBadgeText({ tabId, text: "" });
     }
   })().catch(() => {});
