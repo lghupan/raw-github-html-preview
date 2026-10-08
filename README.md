@@ -6,7 +6,7 @@ The extension has no runtime dependencies, build step, account, analytics, or pr
 
 ## Install
 
-1. Clone this private repository or download and extract its source ZIP.
+1. Clone this repository or download and extract its source ZIP.
 2. Open `chrome://extensions` in Chrome 120 or newer.
 3. Turn on **Developer mode**.
 4. Click **Load unpacked** and select the repository's **`extension`** folder.
@@ -35,6 +35,8 @@ This is for self-contained files. External scripts, stylesheets, fonts, images, 
 Opening a matching raw HTML URL automatically executes the file's inline scripts. Scripts can still navigate their own tab, so open HTML you trust. The sandbox is not a general-purpose malware analysis environment.
 
 ## Permissions and privacy
+
+Read the [privacy policy](PRIVACY.md) for details about local URL processing and data handling.
 
 | Permission | Purpose |
 | --- | --- |

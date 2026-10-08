@@ -1,0 +1,3 @@
+Generated with the built-in image_gen tool using the user's supplied image as a style reference. Transparent background enabled.
+
+Use case: logo-brand. Create a square PNG logo for the Raw GitHub HTML Preview Chrome extension. Use the attached image as the style reference: a thick slate blue-gray browser-window frame with rounded outer corners, two teal and mint circles in its top bar, a white content panel, and the exact text "HTML" centered in bold condensed uppercase lettering. Keep the design flat, crisp, simple, symmetrical, and readable at 128 pixels. Center the emblem within the middle 75% of the canvas, with equal transparent margins outside it. Keep the interior panel opaque white. No gradients, shadows, texture, extra text, watermark, or additional symbols.
