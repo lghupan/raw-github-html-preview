@@ -1,0 +1,3 @@
+Generated with the built-in image_gen tool using assets/logo.png as the reference. Opaque background enabled. The final store tile is exported as a 440 by 280 JPEG.
+
+Create a clean Chrome Web Store promotional graphic for Raw GitHub HTML Preview, in a landscape 11:7 aspect ratio. Use the attached logo exactly as the visual identity: slate browser frame, two mint dots, and HTML lettering. Place the logo large on the left and the exact words "Raw GitHub" and "HTML Preview" as two clean, bold lines on the right. Use a deep slate-blue opaque background and white typography with a small mint accent. Flat, restrained design with generous spacing. No extra text, badges, ratings, shadows, gradients, or screenshots. It must be readable when exported at 440 by 280 pixels.
